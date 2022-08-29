@@ -15,6 +15,15 @@
 #include <unistd.h>
 #endif
 
+#ifdef __vita__
+#include <unistd.h> 
+#include <vitasdk.h>
+extern "C" {
+int _newlib_heap_size_user = 256 * 1024 * 1024;
+void vglInitExtended(int legacy_pool_size, int width, int height, int ram_threshold, SceGxmMultisampleMode msaa);
+};
+#endif
+
 extern "C"
 {
 	#include "game.h"
@@ -50,6 +59,8 @@ static fs::path FindGameData()
 
 	dataPath = pathbuf;
 	dataPath = dataPath.parent_path().parent_path() / "Resources";
+#elif defined(__vita__)
+	dataPath = "ux0:data/CroMagRally/Data";
 #else
 	dataPath = "Data";
 #endif
@@ -225,6 +236,15 @@ static void Shutdown()
 
 int main(int argc, char** argv)
 {
+#ifdef __vita__
+	scePowerSetArmClockFrequency(444);
+	scePowerSetBusClockFrequency(222);
+	scePowerSetGpuClockFrequency(222);
+	scePowerSetGpuXbarClockFrequency(166);
+	vglInitExtended(8 * 1024 * 1024, 960, 544, 8 * 1024 * 1024, SCE_GXM_MULTISAMPLE_4X);
+	chdir("ux0:data");
+#endif
+
 	int				returnCode				= 0;
 	std::string		finalErrorMessage		= "";
 	bool			showFinalErrorMessage	= false;

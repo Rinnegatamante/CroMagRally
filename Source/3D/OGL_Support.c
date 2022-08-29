@@ -1173,6 +1173,9 @@ OGLLightDefType	*lights;
 
 GLenum _OGL_CheckError(const char* file, const int line)
 {
+#ifdef __vita__
+	return 0;
+#endif
 	GLenum error = glGetError();
 	if (error != 0)
 	{

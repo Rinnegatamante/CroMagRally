@@ -27,8 +27,11 @@
 #define	MAX_MORPH_TRIMESHES		10
 #define	MAX_MORPH_POINTS		1000
 
+#ifdef __vita__
+#define	MAX_SPECIAL_DATA_BYTES	(8 * 8) // Code is not 32bit compatible
+#else
 #define	MAX_SPECIAL_DATA_BYTES	(sizeof(void*) * 8)
-
+#endif
 
 
 			/*********************/

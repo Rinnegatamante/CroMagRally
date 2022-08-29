@@ -19,6 +19,24 @@ endif()
 set(CMAKE_OSX_DEPLOYMENT_TARGET "10.11" CACHE STRING "Minimum OS X deployment version")
 set(CMAKE_OSX_ARCHITECTURES "arm64;x86_64" CACHE STRING "Target macOS architectures")
 
+if (VITA)
+  if( DEFINED ENV{VITASDK} )
+    set(CMAKE_TOOLCHAIN_FILE "$ENV{VITASDK}/share/vita.toolchain.cmake" CACHE PATH "toolchain file")
+  else()
+    message(FATAL_ERROR "Please define VITASDK to point to your SDK path!")
+  endif()
+  include("$ENV{VITASDK}/share/vita.cmake" REQUIRED)
+
+  ## Vita config options
+  # Display name (under bubble in LiveArea)
+  set(VITA_APP_NAME "Cro-Mag Rally")
+  # Unique ID must be exactly 9 characters. Recommended: XXXXYYYYY where X =
+  # unique string of developer and Y = a unique number for this app
+  set(VITA_TITLEID  "CROMAGRLY")
+  # Optional version string to show in LiveArea's more info screen
+  set(VITA_VERSION  "1.0")
+endif()
+
 project(${GAME_TARGET}
 	VERSION ${GAME_VERSION}
 	LANGUAGES C CXX
@@ -56,8 +74,10 @@ set(POMME_NO_QD3D true)
 
 add_subdirectory(extern/Pomme)
 
-find_package(SDL2 REQUIRED COMPONENTS main)
-find_package(OpenGL REQUIRED)
+if (NOT VITA)
+    find_package(SDL2 REQUIRED COMPONENTS main)
+	find_package(OpenGL REQUIRED)
+endif()
 
 #------------------------------------------------------------------------------
 # GAME SOURCES
@@ -84,11 +104,20 @@ source_group(TREE ${GAME_SRCDIR} PREFIX "" FILES ${GAME_ALL_SOURCES})
 # EXECUTABLE TARGET
 #------------------------------------------------------------------------------
 
+if (NOT VITA)
+set(GAME_LIBRARIES
+	Pomme
+	SDL2
+	SDL2_mixer
+	SDL2_image
+	OpenGL::GL
+)
+else()
 set(GAME_LIBRARIES
 	Pomme
 	${SDL2_LIBRARIES}
-	OpenGL::GL
 )
+endif()
 
 if(WIN32)
 	# "WIN32" here is equivalent to /SUBSYSTEM:WINDOWS for MSVC
@@ -112,13 +141,20 @@ else()
 	add_executable(${GAME_TARGET} ${GAME_ALL_SOURCES})
 endif()
 
+if (NOT VITA)
 target_include_directories(${GAME_TARGET} PRIVATE
 	${SDL2_INCLUDE_DIRS}
 	${OPENGL_INCLUDE_DIR}
 	extern/Pomme/src
 	${GAME_SRCDIR}/Headers
 )
-
+else()
+target_include_directories(${GAME_TARGET} PRIVATE
+	${SDL2_INCLUDE_DIRS}
+	extern/Pomme/src
+	${GAME_SRCDIR}/Headers
+)
+endif()
 
 #------------------------------------------------------------------------------
 # COMPILER/LINKER OPTIONS
@@ -192,6 +228,28 @@ else()
 endif()
 
 target_link_libraries(${GAME_TARGET} ${GAME_LIBRARIES})
+
+# VITA
+if(VITA)
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wl,-q -O3 -fno-optimize-sibling-calls -fsigned-char")
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wl,-q -O3 -fno-optimize-sibling-calls -fsigned-char")
+
+target_link_libraries(${GAME_TARGET}
+    SDL2_image SDL2_mixer SDL2 SDL
+    m mathneon
+    vita2d
+    vitaGL
+    vitashark
+    SceAppMgr_stub SceKernelDmacMgr_stub
+    SceShaccCgExt SceShaccCg_stub taihen_stub
+    SceKernelThreadMgr_stub ScePower_stub
+    SceAppUtil_stub SceDisplay_stub SceGxm_stub SceSysmodule_stub
+    SceAudio_stub SceAudioIn_stub
+    SceCommonDialog_stub
+    SceCtrl_stub SceIme_stub
+    SceHid_stub SceMotion_stub SceTouch_stub
+)
+endif()
 
 #------------------------------------------------------------------------------
 # PLATFORM-SPECIFIC PACKAGING
@@ -274,6 +332,23 @@ else()
 	# Copy assets besides executable
 	add_custom_command(TARGET ${GAME_TARGET} POST_BUILD
 		COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_SOURCE_DIR}/Data ${APP_PARENT_DIR}/Data)
+endif()
+
+if(VITA)
+  ## Create Vita files
+  vita_create_self(eboot.bin ${GAME_TARGET}) # SAFE)
+
+  # vita_create_vpk is creating malformed param.sfo for me....
+  # The FILE directive lets you add additional files to the VPK, the syntax is
+  # FILE src_path dst_path_in_vpk. In this case, we add the LiveArea paths.
+  #vita_create_vpk(${VITA_APP_NAME}.vpk ${VITA_TITLEID} eboot.bin
+    #VERSION ${VITA_VERSION}
+    #NAME ${VITA_APP_NAME}
+    #FILE helloworld_sce_sys/icon0.png sce_sys/icon0.png
+    #FILE helloworld_sce_sys/livearea/contents/bg.png sce_sys/livearea/contents/bg.png
+    #FILE helloworld_sce_sys/livearea/contents/startup.png sce_sys/livearea/contents/startup.png
+    #FILE helloworld_sce_sys/livearea/contents/template.xml sce_sys/livearea/contents/template.xml
+    #)
 endif()
 
 # Windows-specific libraries
