@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<livearea style="psmobile" format-ver="01.00" content-rev="1">
+	<livearea-background>
+		<image>bg0.png</image>
+	</livearea-background>
+	 
+	<gate>
+		<startup-image>cro.png</startup-image>
+	</gate>
+
+	<frame id="frame2">
+		<liveitem>
+			<target>psla:-framecap</target>
+			<image align="center" origin="frame" valign="center" y="-200">30fps.png</image>
+		</liveitem>
+	</frame>	
+</livearea>
