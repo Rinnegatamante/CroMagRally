@@ -27,14 +27,9 @@ if (VITA)
   endif()
   include("$ENV{VITASDK}/share/vita.cmake" REQUIRED)
 
-  ## Vita config options
-  # Display name (under bubble in LiveArea)
   set(VITA_APP_NAME "Cro-Mag Rally")
-  # Unique ID must be exactly 9 characters. Recommended: XXXXYYYYY where X =
-  # unique string of developer and Y = a unique number for this app
   set(VITA_TITLEID  "CROMAGRLY")
-  # Optional version string to show in LiveArea's more info screen
-  set(VITA_VERSION  "1.0")
+  set(VITA_MKSFOEX_FLAGS "-d ATTRIBUTE2=12")
 endif()
 
 project(${GAME_TARGET}
@@ -336,19 +331,17 @@ endif()
 
 if(VITA)
   ## Create Vita files
-  vita_create_self(eboot.bin ${GAME_TARGET}) # SAFE)
+  vita_create_self(eboot.bin ${GAME_TARGET})
 
-  # vita_create_vpk is creating malformed param.sfo for me....
-  # The FILE directive lets you add additional files to the VPK, the syntax is
-  # FILE src_path dst_path_in_vpk. In this case, we add the LiveArea paths.
-  #vita_create_vpk(${VITA_APP_NAME}.vpk ${VITA_TITLEID} eboot.bin
-    #VERSION ${VITA_VERSION}
-    #NAME ${VITA_APP_NAME}
-    #FILE helloworld_sce_sys/icon0.png sce_sys/icon0.png
-    #FILE helloworld_sce_sys/livearea/contents/bg.png sce_sys/livearea/contents/bg.png
-    #FILE helloworld_sce_sys/livearea/contents/startup.png sce_sys/livearea/contents/startup.png
-    #FILE helloworld_sce_sys/livearea/contents/template.xml sce_sys/livearea/contents/template.xml
-    #)
+  vita_create_vpk(CroMag.vpk ${VITA_TITLEID} eboot.bin
+    VERSION ${VITA_VERSION}
+    NAME ${VITA_APP_NAME}
+    FILE ${CMAKE_SOURCE_DIR}/sce_sys/icon0.png sce_sys/icon0.png
+    FILE ${CMAKE_SOURCE_DIR}/sce_sys/livearea/contents/bg0.png sce_sys/livearea/contents/bg0.png
+    FILE ${CMAKE_SOURCE_DIR}/sce_sys/livearea/contents/cro.png sce_sys/livearea/contents/cro.png
+    FILE ${CMAKE_SOURCE_DIR}/sce_sys/livearea/contents/30fps.png sce_sys/livearea/contents/30fps.png
+    FILE ${CMAKE_SOURCE_DIR}/sce_sys/livearea/contents/template.xml sce_sys/livearea/contents/template.xml
+  )
 endif()
 
 # Windows-specific libraries

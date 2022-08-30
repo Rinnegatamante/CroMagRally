@@ -17,6 +17,10 @@
 #include <SDL_opengl.h>
 #include <math.h>
 
+#ifdef __vita__
+extern int swap_interval;
+#endif
+
 extern SDL_Window*		gSDLWindow;
 //extern	GWorldPtr		gTerrainDebugGWorld;
 
@@ -271,9 +275,11 @@ void OGL_SetupGameView(OGLSetupInputType *setupDefPtr)
 
 	OGL_CreateLights(&setupDefPtr->lights);
 	OGL_CheckError();
-
+#ifdef __vita__
+	SDL_GL_SetSwapInterval(swap_interval);//gCommandLine.vsync);
+#else
 	SDL_GL_SetSwapInterval(1);//gCommandLine.vsync);
-
+#endif
 
 
 				/* PASS BACK INFO */

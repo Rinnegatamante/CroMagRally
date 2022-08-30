@@ -22,6 +22,7 @@ extern "C" {
 int _newlib_heap_size_user = 256 * 1024 * 1024;
 void vglInitExtended(int legacy_pool_size, int width, int height, int ram_threshold, SceGxmMultisampleMode msaa);
 };
+int swap_interval = 1;
 #endif
 
 extern "C"
@@ -226,6 +227,10 @@ retryVideo:
 			SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_WARNING, "Cro-Mag Rally", "Couldn't load gamecontrollerdb.txt!", gSDLWindow);
 		}
 	}
+
+#ifdef __vita__
+	SDL_GL_SetSwapInterval(swap_interval);
+#endif
 }
 
 static void Shutdown()
@@ -237,6 +242,19 @@ static void Shutdown()
 int main(int argc, char** argv)
 {
 #ifdef __vita__
+	SceAppUtilInitParam init_param;
+	SceAppUtilBootParam boot_param;
+	memset(&init_param, 0, sizeof(SceAppUtilInitParam));
+	memset(&boot_param, 0, sizeof(SceAppUtilBootParam));
+	sceAppUtilInit(&init_param, &boot_param);
+	
+	SceAppUtilAppEventParam eventParam;
+	memset(&eventParam, 0, sizeof(SceAppUtilAppEventParam));
+	sceAppUtilReceiveAppEvent(&eventParam);
+	if (eventParam.type == 0x05) { // Game launched with 30 fps mode
+		swap_interval = 2;
+	}
+
 	scePowerSetArmClockFrequency(444);
 	scePowerSetBusClockFrequency(222);
 	scePowerSetGpuClockFrequency(222);
